@@ -1,0 +1,38 @@
+kind: pipeline
+name: jellyfin-library-count-prometheus-exporter
+type: docker
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+  - name: push-built-image
+    image: plugins/docker
+    settings:
+      context: app/
+      dockerfile: app/Dockerfile
+      registry: gitea.scubbo.org
+      repo: gitea.scubbo.org/scubbo/jellyfin-library-count-prometheus-exporter
+      # https://laszlo.cloud/how-using-cache-from-can-speed-up-your-docker-builds-in-droneci
+      cache_from:
+        - "gitea.scubbo.org/scubbo/jellyfin-library-count-prometheus-exporter:latest"
+      tags:
+        - ${DRONE_COMMIT_SHA:0:10}
+        - latest
+      debug: true
+      launch_debug: true
+      username: scubbo
+      mtu: 1450
+      password:
+        from_secret: gitea_password
+  - name: telegram_notification
+    image: appleboy/drone-telegram
+    settings:
+      token:
+        from_secret: telegram_token
+      to:
+        from_secret: telegram_convo_id
+
+image_pull_secrets:
+  - dockerconfigjson
