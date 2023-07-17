@@ -1,8 +1,4 @@
-FROM debian
-
-RUN apt update
-RUN apt upgrade -y
-RUN apt install -y python3 python3-pip
+FROM python:3.11-bookworm
 
 ADD requirements.txt /
 RUN pip3 install -r /requirements.txt
