@@ -76,13 +76,13 @@ def main():
 	while True:
 		refresh_rate = int(os.environ.get('REFRESH_RATE', 60))
 		if (datetime.datetime.now() - playback_last_refreshed).total_seconds() >= refresh_rate:
+			playback_last_refreshed = datetime.datetime.now()
 			try:
 				update_playback_metrics(
 					os.environ['API_URL'], os.environ['API_KEY'],
 					watch_time_gauge, series_gauge, genre_gauge,
 					playback_item_cache,
 				)
-				playback_last_refreshed = datetime.datetime.now()
 			except Exception as e:
 				LOGGER.warning(f'Failed to refresh playback metrics: {e}')
 		time.sleep(1)
