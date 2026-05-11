@@ -48,7 +48,6 @@ def _fetch_value_from_cache(media_type):
 
 def _get_value(media_type):
 	return _fetch_value_from_cache(media_type)
-	return [media_type+'Count']
 
 
 def _gauge_update(media_type):
