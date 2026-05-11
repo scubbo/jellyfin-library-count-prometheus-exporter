@@ -11,6 +11,14 @@ _PLAYBACK_SQL = (
 )
 
 
+def fetch_any_user_id(api_url: str, api_key: str) -> str:
+    """Return any valid Jellyfin user ID, used as context for item detail lookups."""
+    url = f'{api_url}/Users?api_key={api_key}'
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.json()[0]['Id']
+
+
 def fetch_playback_rows(api_url: str, api_key: str) -> list:
     """Return one dict per (user, item, type) with cumulative seconds watched."""
     url = f'{api_url}/user_usage_stats/submit_custom_query?api_key={api_key}'
@@ -23,11 +31,11 @@ def fetch_playback_rows(api_url: str, api_key: str) -> list:
     return [dict(zip(columns, row)) for row in data['results']]
 
 
-def fetch_item_details(api_url: str, api_key: str, item_id: str, cache: dict) -> dict:
+def fetch_item_details(api_url: str, api_key: str, user_id: str, item_id: str, cache: dict) -> dict:
     """Return genres and series name for a Jellyfin item, reading from cache when available."""
     if item_id in cache:
         return cache[item_id]
-    url = f'{api_url}/Items/{item_id}?Fields=Genres,SeriesName&api_key={api_key}'
+    url = f'{api_url}/Users/{user_id}/Items/{item_id}?Fields=Genres,SeriesName&api_key={api_key}'
     response = requests.get(url)
     response.raise_for_status()
     data = response.json()
@@ -42,6 +50,7 @@ def fetch_item_details(api_url: str, api_key: str, item_id: str, cache: dict) ->
 def update_playback_metrics(
     api_url: str,
     api_key: str,
+    user_id: str,
     watch_time_gauge,
     series_gauge,
     genre_gauge,
@@ -64,7 +73,7 @@ def update_playback_metrics(
         watch_time_totals[key] = watch_time_totals.get(key, 0) + seconds
 
         try:
-            details = fetch_item_details(api_url, api_key, item_id, item_cache)
+            details = fetch_item_details(api_url, api_key, user_id, item_id, item_cache)
         except Exception as e:
             LOGGER.warning(f'Could not fetch details for item {item_id}: {e}')
             details = {'Genres': [], 'SeriesName': None}

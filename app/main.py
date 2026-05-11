@@ -11,7 +11,7 @@ import requests
 from functools import partial
 
 from prometheus_client import start_http_server, Gauge, REGISTRY, GC_COLLECTOR, PLATFORM_COLLECTOR, PROCESS_COLLECTOR
-from playback import update_playback_metrics
+from playback import fetch_any_user_id, update_playback_metrics
 
 REGISTRY.unregister(GC_COLLECTOR)
 REGISTRY.unregister(PLATFORM_COLLECTOR)
@@ -70,6 +70,7 @@ def main():
 	                    'Cumulative watch time by genre in seconds', ['user', 'genre'])
 	playback_item_cache = {}
 	playback_last_refreshed = datetime.datetime.fromtimestamp(0)
+	playback_user_id = None
 
 	start_http_server(8555)
 	LOGGER.info('Starting up!')
@@ -78,8 +79,11 @@ def main():
 		if (datetime.datetime.now() - playback_last_refreshed).total_seconds() >= refresh_rate:
 			playback_last_refreshed = datetime.datetime.now()
 			try:
+				if playback_user_id is None:
+					playback_user_id = fetch_any_user_id(os.environ['API_URL'], os.environ['API_KEY'])
 				update_playback_metrics(
 					os.environ['API_URL'], os.environ['API_KEY'],
+					playback_user_id,
 					watch_time_gauge, series_gauge, genre_gauge,
 					playback_item_cache,
 				)
