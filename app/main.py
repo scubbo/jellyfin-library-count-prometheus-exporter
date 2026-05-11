@@ -11,6 +11,7 @@ import requests
 from functools import partial
 
 from prometheus_client import start_http_server, Gauge, REGISTRY, GC_COLLECTOR, PLATFORM_COLLECTOR, PROCESS_COLLECTOR
+from playback import update_playback_metrics
 
 REGISTRY.unregister(GC_COLLECTOR)
 REGISTRY.unregister(PLATFORM_COLLECTOR)
@@ -40,8 +41,7 @@ def _refresh_cache():
 	CACHE_LAST_QUERIED = datetime.datetime.now()
 
 def _fetch_value_from_cache(media_type):
-	# Should refresh?
-	if (not CACHE) or ((datetime.datetime.now()-CACHE_LAST_QUERIED).seconds >= os.environ.get('REFRESH_RATE', 60)):
+	if (not CACHE) or ((datetime.datetime.now()-CACHE_LAST_QUERIED).total_seconds() >= int(os.environ.get('REFRESH_RATE', 60))):
 		_refresh_cache()
 	return CACHE[media_type+'Count']
 
@@ -59,11 +59,32 @@ def main():
 	gauges = {media_type: Gauge(f'jellyfin_{media_type}Count', f'Count of {media_type}') for media_type in MEDIA_TYPES}
 	for media_type, gauge in gauges.items():
 		# Slightly inefficient that each Gauge will query
-		# independently rather than updating a 
+		# independently rather than updating a
 		gauge.set_function(_gauge_update(media_type))
+
+	watch_time_gauge = Gauge('jellyfin_playback_watch_time_seconds',
+	                         'Cumulative watch time in seconds', ['user', 'media_type'])
+	series_gauge = Gauge('jellyfin_playback_series_watch_time_seconds',
+	                     'Cumulative watch time by series in seconds', ['user', 'series'])
+	genre_gauge = Gauge('jellyfin_playback_genre_watch_time_seconds',
+	                    'Cumulative watch time by genre in seconds', ['user', 'genre'])
+	playback_item_cache = {}
+	playback_last_refreshed = datetime.datetime.fromtimestamp(0)
+
 	start_http_server(8555)
 	LOGGER.info('Starting up!')
 	while True:
+		refresh_rate = int(os.environ.get('REFRESH_RATE', 60))
+		if (datetime.datetime.now() - playback_last_refreshed).total_seconds() >= refresh_rate:
+			try:
+				update_playback_metrics(
+					os.environ['API_URL'], os.environ['API_KEY'],
+					watch_time_gauge, series_gauge, genre_gauge,
+					playback_item_cache,
+				)
+				playback_last_refreshed = datetime.datetime.now()
+			except Exception as e:
+				LOGGER.warning(f'Failed to refresh playback metrics: {e}')
 		time.sleep(1)
 
 
