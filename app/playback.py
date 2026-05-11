@@ -58,7 +58,7 @@ def update_playback_metrics(
         user = row['UserName']
         item_id = row['ItemId']
         media_type = row['ItemType']
-        seconds = row['TotalSeconds']
+        seconds = int(row['TotalSeconds'])
 
         key = (user, media_type)
         watch_time_totals[key] = watch_time_totals.get(key, 0) + seconds

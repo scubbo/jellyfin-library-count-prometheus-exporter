@@ -29,9 +29,10 @@ def _make_gauges():
 
 
 def _sql_response(rows):
+    # The plugin returns all values as strings, matching real API behaviour
     return {
         'colums': ['UserName', 'ItemId', 'ItemType', 'TotalSeconds'],
-        'results': rows,
+        'results': [[str(v) for v in row] for row in rows],
     }
 
 
@@ -45,8 +46,8 @@ def test_fetch_playback_rows_returns_structured_rows():
     ]))
     rows = fetch_playback_rows(API_URL, API_KEY)
     assert rows == [
-        {'UserName': 'alice', 'ItemId': 'item-1', 'ItemType': 'Movie', 'TotalSeconds': 3600},
-        {'UserName': 'bob', 'ItemId': 'item-2', 'ItemType': 'Episode', 'TotalSeconds': 1800},
+        {'UserName': 'alice', 'ItemId': 'item-1', 'ItemType': 'Movie', 'TotalSeconds': '3600'},
+        {'UserName': 'bob', 'ItemId': 'item-2', 'ItemType': 'Episode', 'TotalSeconds': '1800'},
     ]
 
 
