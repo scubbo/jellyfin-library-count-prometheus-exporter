@@ -189,8 +189,9 @@ def test_update_aggregates_multiple_genres():
     update_playback_metrics(API_URL, API_KEY, USER_ID, watch_gauge, series_gauge, genre_gauge, {})
 
     output = generate_latest(registry).decode('utf-8')
-    assert 'jellyfin_playback_genre_watch_time_seconds{genre="Action",user="alice"} 3600.0' in output
-    assert 'jellyfin_playback_genre_watch_time_seconds{genre="Thriller",user="alice"} 3600.0' in output
+    # 3600s split evenly across 2 genres
+    assert 'jellyfin_playback_genre_watch_time_seconds{genre="Action",user="alice"} 1800.0' in output
+    assert 'jellyfin_playback_genre_watch_time_seconds{genre="Thriller",user="alice"} 1800.0' in output
 
 
 @responses.activate

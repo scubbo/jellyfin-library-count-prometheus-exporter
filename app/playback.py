@@ -83,9 +83,12 @@ def update_playback_metrics(
             key = (user, series_name)
             series_totals[key] = series_totals.get(key, 0) + seconds
 
-        for genre in details.get('Genres', []):
-            key = (user, genre)
-            genre_totals[key] = genre_totals.get(key, 0) + seconds
+        genres = details.get('Genres', [])
+        if genres:
+            seconds_per_genre = seconds / len(genres)
+            for genre in genres:
+                key = (user, genre)
+                genre_totals[key] = genre_totals.get(key, 0) + seconds_per_genre
 
     watch_time_gauge.clear()
     for (user, media_type), total in watch_time_totals.items():
