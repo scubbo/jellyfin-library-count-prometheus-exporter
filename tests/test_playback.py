@@ -57,6 +57,8 @@ def test_fetch_playback_rows_sends_replace_user_id_and_sql():
     body = json.loads(responses.calls[0].request.body)
     assert body['ReplaceUserId'] is True
     assert 'PlaybackActivity' in body['CustomQueryString']
+    # DB column is UserId; ReplaceUserId renames it to UserName in the output
+    assert 'UserId' in body['CustomQueryString']
 
 
 @responses.activate

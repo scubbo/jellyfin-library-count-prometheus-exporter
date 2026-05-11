@@ -5,9 +5,9 @@ import requests
 LOGGER = logging.getLogger(__name__)
 
 _PLAYBACK_SQL = (
-    'SELECT UserName, ItemId, ItemType, SUM(PlayDuration) AS TotalSeconds '
+    'SELECT UserId, ItemId, ItemType, SUM(PlayDuration) AS TotalSeconds '
     'FROM PlaybackActivity '
-    'GROUP BY UserName, ItemId, ItemType'
+    'GROUP BY UserId, ItemId, ItemType'
 )
 
 
